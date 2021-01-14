@@ -29,86 +29,20 @@ import time
 # ----------------
 # Nested functions
 # ----------------
-def read_runoff(ncfilename,xVar,yVar,RACMOvar,runoffCalculation):
+def unit_conversion(inputUnits, outputUnits):
 #{{{
-   # Read file
-   ncfile = Dataset(ncfilename, 'r')
-
-   x = ncfile.variables[xVar][:]
-   y = ncfile.variables[yVar][:]
-   lat = ncfile.variables['LAT'][:,:]
-   lon = ncfile.variables['LON'][:,:]
-   runoff = ncfile.variables[RACMOvar]
-   
-   # Extract year
-   year = int(os.path.basename(ncfilename).split('-')[-1].split('.')[0])
-   #year = datetime.strptime(os.path.basename(ncfilename), netcdf_filename_datetime_template).year
-
-   if runoffCalculation == 'monthly':
-      # Monthly means
-      runoff_mean = runoff[:,:,:]
-      for month in range(1,13):
-         dt = (datetime.strptime('{:02d}/1/{:4.0f}'.format(month,year), '%m/%d/%Y') - timeEpoch).days
-         t0 = datetime.strptime('{:02d}/01/{:4.0f}'.format(month,year), '%m/%d/%Y')
-         t1 = t0 + relativedelta(months=1)
-         time_bounds.append( np.array( [[(t0 - timeEpoch).days, \
-                                         (t1 - timeEpoch).days]] ).T)
-
-   if runoffCalculation == 'yearly-sum':
-      # Annual mean
-      runoff_mean = np.expand_dims(np.sum(runoff[:,:,:], axis=0), axis=0) # runoff / year
-      dt = (datetime.strptime('07/01/{:4.0f}'.format(year), '%m/%d/%Y') - timeEpoch).days
-      time_bounds.append( np.array( [[(datetime.strptime('01/01/{:4.0f}'.format(year), '%m/%d/%Y') - timeEpoch).days, \
-                                      (datetime.strptime('12/31/{:4.0f}'.format(year), '%m/%d/%Y') - timeEpoch).days]] ).T)
-
-   if runoffCalculation == 'JJA-mean':
-      # JJA mean
-      runoff_mean = np.expand_dims(np.mean(runoff[5:8,:,:], axis=0), axis=0)
-      dt = (datetime.strptime('07/01/{:4.0f}'.format(year), '%m/%d/%Y') - timeEpoch).days
-      time_bounds.append( np.array( [[(datetime.strptime('06/01/{:4.0f}'.format(year), '%m/%d/%Y') - timeEpoch).days, \
-                                      (datetime.strptime('08/31/{:4.0f}'.format(year), '%m/%d/%Y') - timeEpoch).days]] ).T)
-
-   return dt, time_bounds, x, y, runoff_mean, year
-#}}}
-
-def calculate_bias(basinNum, basinArrayBaseline, basinArray, runoffBaseline, runoff):
-#{{{
-   #runoff_bl_basin = np.where(basinArrayBaseline==basinNum, np.flip(runoffBaseline, 1), 0.)
-   #runoff_bl_basin_timeseries = np.sum(runoff_bl_basin, axis=(1,2))
-   #runoff_pd_basin = np.where(basinArray==basinNum, np.flip(runoff, 1), 0.)
-   #runoff_pd_basin_timeseries = np.sum(runoff_pd_basin, axis=(1,2))
-
-   mask2d = basinArrayBaseline==basinNum
-   mask3d = np.repeat(mask2d[np.newaxis,:,:], runoffBaseline.shape[0], axis=0)
-   runoff_bl_basin = mask3d * np.flip(runoffBaseline, 1)
-   mask2d = basinArray==basinNum
-   mask3d = np.repeat(mask2d[np.newaxis,:,:], runoff.shape[0], axis=0)
-   runoff_pd_basin = mask3d * np.flip(runoff, 1)
-   runoff_bl_basin_timeseries = np.sum(runoff_bl_basin, axis=(1,2))
-   runoff_pd_basin_timeseries = np.sum(runoff_pd_basin, axis=(1,2))
-
-   # Yearly sums
-   runoff_bl_basin_annual = 12. * moving_average.moving_average_downsample(range(0,len(runoff_bl_basin_timeseries)), runoff_bl_basin_timeseries, 12)
-   runoff_pd_basin_annual = 12. * moving_average.moving_average_downsample(range(0,len(runoff_pd_basin_timeseries)), runoff_pd_basin_timeseries, 12)
-
-   # Differences in annual means
-   runoff_annual_diffs = runoff_pd_basin_annual - runoff_bl_basin_annual
-
-   runoffBias = np.mean(runoff_annual_diffs)
-
-   return runoffBias
-#}}}
-
-def runoff_unit_conversion(inputUnits, outputUnits):
-#{{{
-   # This assumes that the grid resolution is 1 km x 1 km
-   if inputUnits == 'mmWE' and outputUnits == 'm3':
-      unitConversion = 1000.
-   elif inputUnits == 'mmWE yr-1' and outputUnits == 'kg s-1':
-      unitConversion = 1000000./31557600.
+   if inputUnits == outputUnits:
+      unitConversion = 1.
    else:
-      print('runoff unit conversion from ' + inputUnits + ' to ' + outputUnits + ' not supported!')
-      return None
+      # This assumes that the grid resolution is 1 km x 1 km
+      if inputUnits == 'mmWE' and outputUnits == 'm3WE':
+         unitConversion = 1000.
+      elif inputUnits == 'mmWE yr-1' and outputUnits == 'kg s-1':
+         unitConversion = 1000000./31557600.
+      else:
+         print('runoff unit conversion from ' + inputUnits + ' to ' + outputUnits + ' not supported!')
+         unitConversion = None
+
    return unitConversion
 #}}}
 
@@ -127,34 +61,34 @@ def submerged_area(submergedAreaArray, basinArray, basinNum):
 # -------------
 netcdf_dirs = list()
 
-# Runoff
-netcdf_dirs.append(os.environ['RACMO_downscaled_DIR']); netcdf_filename_template = 'runoff.????_???.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.DD.nc';
-#netcdf_dirs.append(os.environ['RACMO_downscaled_DIR']); netcdf_filename_template = 'runoff_WJB_int.????.BN_1958_2013_1km.DD.nc';
-tVar = 'time'
-xVar = 'x'
-yVar = 'y'
-RACMOvar = 'runoffcorr'
-projection = None # default is EPSG 3413, a.k.a. '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
-xOverride = None
-yOverride = None
-# Conversion from mm W.E. to cubic m (using RACMO grid resolution)
-outputUnits = 'm3'
-runoffUnitConversion = 1000.
-
-# # SMB
-# netcdf_dirs.append(os.environ['RACMO_downscaled_DIR']); netcdf_filename_template = 'smb_rec.????_???.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.DD.nc';
-# #netcdf_dirs.append(os.environ['RACMO_downscaled_DIR']); netcdf_filename_template = 'SMB_rec_WJB_int.????.BN_1958_2013_1km.DD.nc';
+# # Runoff
+# netcdf_dirs.append(os.environ['RACMO_downscaled_DIR']); netcdf_filename_template = 'runoff.????_???.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.DD.nc';
+# #netcdf_dirs.append(os.environ['RACMO_downscaled_DIR']); netcdf_filename_template = 'runoff_WJB_int.????.BN_1958_2013_1km.DD.nc';
 # tVar = 'time'
 # xVar = 'x'
 # yVar = 'y'
-# RACMOvar = 'smb_rec'
-# #RACMOvar = 'SMB_rec'
+# RACMOvar = 'runoffcorr'
 # projection = None # default is EPSG 3413, a.k.a. '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
 # xOverride = None
 # yOverride = None
 # # Conversion from mm W.E. to cubic m (using RACMO grid resolution)
-# outputUnits = 'mmWE' # 'kg s-1' | 'm3'
-# runoffUnitConversion = 1
+# inputUnits = 'mmWE'
+# outputUnits = 'm3WE'
+
+# SMB
+netcdf_dirs.append(os.environ['RACMO_downscaled_DIR']); netcdf_filename_template = 'smb_rec.????_???.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.DD.nc';
+#netcdf_dirs.append(os.environ['RACMO_downscaled_DIR']); netcdf_filename_template = 'SMB_rec_WJB_int.????.BN_1958_2013_1km.DD.nc';
+tVar = 'time'
+xVar = 'x'
+yVar = 'y'
+RACMOvar = 'smb_rec'
+#RACMOvar = 'SMB_rec'
+projection = None # default is EPSG 3413, a.k.a. '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
+xOverride = None
+yOverride = None
+# Conversion from mm W.E. to cubic m
+inputUnits = 'mmWE'
+outputUnits = 'm3WE'
 
 # Output file
 outputDirectory = '.'
@@ -168,7 +102,6 @@ clipfiledir = '~/ISMIP6/GrIS_Ocean_Forcing/Tidewater_Basins/tif'
 #if basinsRaster == 'basins4highres':
 clipfile = clipfiledir + '/basins4highres_xy.mat_basins_select.tif'
 submergedAreaRaster = clipfiledir + '/basins4highres_xy.mat_submergedarea.tif'
-outputUnits = outputUnits + ' m-2'
 
 # HEL
 basinfilter = 'basin=26';
@@ -360,12 +293,12 @@ for ncfilename in ncfilenames:
 
    # Spatial processing
    basinNum = float(basinValue)
-   runoffSum = np.empty(runoff.shape[0])
    for itime in range(runoff.shape[0]):
       runoffMasked = (basinArray==basinNum) * np.flipud(runoff[itime,:,:])
 
       # Sum runoff over the basin
       runoffSums.append(np.nansum(runoffMasked))
+
       dts.append(time_epoch + timedelta(days=int(time[itime])))
 
    ncfile.close()
@@ -378,10 +311,14 @@ sort_idx = np.argsort(dts)
 dts_sorted = dts[sort_idx]
 runoffSums_sorted = runoffSums[sort_idx]
 
+# Convert units
+unitConversion = unit_conversion(inputUnits, outputUnits)
+runoffSums_sorted = unitConversion * runoffSums_sorted
+
 # Write output text file
 outputFile = outputDirectory + '/' + netcdf_filename_template.replace('?','').replace('.nc','.csv')
 f = open(outputFile, 'w')
-f.write('date, runoff ({:s})'.format(outputUnits))
+f.write('#date, {:s} ({:s})\n'.format(RACMOvar, outputUnits))
 for i in range(len(dts)):
    f.write('{:s}, {: 16.3f}\n'.format(dts_sorted[i].strftime('%Y-%m-%d %H:%M:%S'), runoffSums_sorted[i]))
 f.close()
