@@ -7,6 +7,7 @@ Created on Thu Feb  4 21:10:31 2021
 @author: lizz
 """
 import nifl_helper
+from matplotlib import cm
 
 
 ## Extract bed topo along flowline
@@ -18,25 +19,42 @@ xvals = (0.001*np.array(nifl_helper.ArcArray(xyvals)))
 ## Create arclength array for selected points
 s = 0.001*np.array(nifl_helper.ArcArray(np.array(xys)))+2 # trim the 2km that was removed
 
-## Plot
 
-fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, constrained_layout=True)
+### Plot all on one set of axes
+smb_offset=5000 # how many 'meters' above topo to plot this line
+runoff_offset=4000
+terminus_offset=3000
+scaling=750  # vertical multiplicative factor to display xcorr on same axes as topo
+qual_colors = cm.get_cmap('tab20b')
 
-ax1.axhline(0)
-ax1.plot(s, smb_corr_amax, marker='.', color='k', ls=':', label='SMB')
-ax1.plot(s, runoff_corr_amax, marker='*', color='k', ls='--', label='Runoff')
-ax1.plot(s, terminus_corr_amax, marker='d', color='k', label='Terminus')
-ax1.legend(loc='lower left')
-ax1.set(ylabel='AMax cross-correlation')
+fig, ax = plt.subplots(1, constrained_layout=True)
 
-## add long-term?
-ax1.plot(s, smb_lt_corr_amax, marker='.', color='DarkGrey', ls=':', label='SMB long-term')
-ax1.plot(s, rf_lt_corr_amax, marker='*', color='DarkGrey', ls='--', label='Runoff long-term')
-ax1.plot(s, term_lt_corr_amax, marker='d', color='DarkGrey', label='Terminus long-term')
+ax.axvline(10, color='k', lw=1.0, ls=':')
+ax.axvline(14, color='k', lw=1.0, ls=':')
+ax.plot(s, smb_offset+ scaling*np.array(smb_corr_amax), color=qual_colors(0), lw=2.0, label='SMB')
+ax.plot(s, runoff_offset+ scaling*np.array(runoff_corr_amax), color=qual_colors(2), lw=2.0, label='Runoff')
+ax.plot(s, terminus_offset+ scaling*np.array(terminus_corr_amax), color=qual_colors(4), lw=2.0, label='Terminus')
+# ax.plot(s, smb_offset+ scaling*np.array(smb_corr_amax), color='k', lw=2.0, label='SMB')
+# ax.plot(s, runoff_offset+ scaling*np.array(runoff_corr_amax), color='k', lw=2.0, label='Runoff')
+# ax.plot(s, terminus_offset+ scaling*np.array(terminus_corr_amax), color='k', lw=2.0, label='Terminus')
 
-ax2.plot(xvals, bed_vals, color='saddlebrown')
-ax2.plot(xvals, surface_vals, color='darkgrey')
+## add long-term
+ax.plot(s, smb_offset+ scaling*np.array(smb_lt_corr_amax), color=qual_colors(1), ls=':', lw=2.0, label='SMB long-term')
+ax.plot(s, runoff_offset+ scaling*np.array(rf_lt_corr_amax), color=qual_colors(3), ls=':', lw=2.0, label='Runoff long-term')
+ax.plot(s, terminus_offset+ scaling*np.array(term_lt_corr_amax), color=qual_colors(5), ls=':', lw=2.0, label='Terminus long-term')
+
+ax.plot(xvals, bed_vals, color='saddlebrown')
+ax.plot(xvals, surface_vals, color='darkgrey')
 plt.fill_between(xvals, surface_vals, bed_vals, color='darkgrey', alpha=0.5)
 plt.fill_between(xvals, bed_vals, y2=-1300, color='saddlebrown', alpha=0.5, hatch='/')
-ax2.set(xlim=(25, 0), ylim=(-1300, 1500), aspect=0.002, 
-        xlabel='Upstream distance [km]', ylabel='Elevation [m a.s.l.]')
+ax.set(xlim=(25, 0), ylim=(-1300, 5500), aspect=0.002, 
+        xlabel='Upstream distance [km]',
+        yticks=(-1000, 0, 1000, terminus_offset, runoff_offset, smb_offset),
+        yticklabels=('-1000', '0', '1000 m a.s.l.', 'Terminus', 'Runoff', 'SMB'))
+ax.get_yticklabels()[3].set_color(qual_colors(4)) # match the ticks to the plotted color
+ax.get_yticklabels()[4].set_color(qual_colors(2))
+ax.get_yticklabels()[5].set_color(qual_colors(0))
+
+
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
