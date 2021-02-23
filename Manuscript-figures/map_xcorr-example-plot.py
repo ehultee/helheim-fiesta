@@ -5,6 +5,7 @@ Pub-quality figures: maps of xcorr and lag for different variables
 See Jupyter notebook for full guided analysis
 
 Created on Fri Dec 18 13:59:51 2020
+Updated Mon Feb 22 2021
 
 @author: lizz
 """
@@ -143,8 +144,9 @@ smb_corr_plag1 = []
 smb_lag_plag1 = []
 
 for xy, pred in zip(xys, preds):
-    corr, lags, ci = nifl.RunoffXcorr(xy, runoff_func=smb_func, runoff_dates=smb_d_interp, 
-                              velocity_pred=pred, t_grid=t_grid, diff=1, normalize=True)
+    corr, lags, ci = nifl.Xcorr1D(xy, series_func=smb_func, series_dates=smb_d_interp, 
+                              velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
+                              diff=1, normalize=True, pos_only=True)
     smb_corr_amax.append(corr[abs(corr).argmax()])
     smb_lag_amax.append(lags[abs(corr).argmax()])
 
@@ -188,8 +190,9 @@ runoff_func = interpolate.interp1d(d_interp, rf[:,2])
 runoff_corr_amax = []
 runoff_lag_amax = []
 for xy, pred in zip(xys, preds):
-    corr, lags, ci = nifl.RunoffXcorr(xy, runoff_func=runoff_func, runoff_dates=d_interp, 
-                              velocity_pred=pred, t_grid=t_grid, diff=1, normalize=True)
+    corr, lags, ci = nifl.Xcorr1D(xy, series_func=runoff_func, series_dates=d_interp, 
+                              velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
+                              diff=1, normalize=True, pos_only=True)
     runoff_corr_amax.append(corr[abs(corr).argmax()])
     runoff_lag_amax.append(lags[abs(corr).argmax()])
 
@@ -217,8 +220,9 @@ termini_func = interpolate.interp1d(tm_d_interp, tm['term_km'])
 terminus_corr_amax = []
 terminus_lag_amax = []
 for xy, pred in zip(xys, preds):
-    corr, lags, ci = nifl.RunoffXcorr(xy, runoff_func=termini_func, runoff_dates=tm_d_interp, 
-                              velocity_pred=pred, t_grid=t_grid, diff=1, normalize=True)
+    corr, lags, ci = nifl.Xcorr1D(xy, series_func=termini_func, series_dates=tm_d_interp, 
+                              velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
+                              diff=1, normalize=True)
     terminus_corr_amax.append(corr[abs(corr).argmax()])
     terminus_lag_amax.append(lags[abs(corr).argmax()])
     
