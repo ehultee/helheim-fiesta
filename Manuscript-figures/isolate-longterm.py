@@ -17,7 +17,8 @@ from scipy import ndimage
 
 
 ## Test low-frequency variability
-def Xcorr1D_lt(pt, series_func, series_dates, velocity_pred, t_grid, t_limits, diff=1, normalize=True):
+def Xcorr1D_lt(pt, series_func, series_dates, velocity_pred, t_grid, t_limits, 
+               diff=1, normalize=True, pos_only=False):
     """
     Compute cross-correlation on coincident series of a 1D time series
     (e.g. catchment-integrated runoff or SMB) versus velocity at a point.
@@ -44,6 +45,11 @@ def Xcorr1D_lt(pt, series_func, series_dates, velocity_pred, t_grid, t_limits, d
         This makes the output inter-comparable with normalized output for other
         variables.  If set to False, the signal amplitude will be larger but
         the correlation values may exceed 1.
+    pos_only : bool, optional
+    	Whether to analyse only xcorrs with positive lag values.  Default is False.
+    	This allows a bidirectional causal relationship.  For a causal relationship 
+    	hypothesised to be single-directional, choose True to display only positive
+    	lag values.
 
     Returns
     -------
@@ -75,6 +81,11 @@ def Xcorr1D_lt(pt, series_func, series_dates, velocity_pred, t_grid, t_limits, d
     ## convert lags to physical units
     lags = np.mean(np.diff(t_grid))*365.26*np.asarray(lags)
     
+    if pos_only:
+    	corr = corr[np.argwhere(lags>=0)].squeeze()
+    	ci = np.asarray(ci)[np.argwhere(lags>=0)].squeeze()
+    	lags = lags[np.argwhere(lags>=0)].squeeze()
+    
     return corr, lags, ci
 
 # In[ ]:
@@ -82,7 +93,7 @@ def Xcorr1D_lt(pt, series_func, series_dates, velocity_pred, t_grid, t_limits, d
 t_grid_trimmed = t_grid[np.argwhere(t_grid<2017)] ## valid range for interpolated funcs
 
 tm_evensampled = termini_func(t_grid_trimmed).squeeze()
-window = np.int(2/np.mean(np.diff(t_grid_trimmed.squeeze()))) # set window size to the number of time steps in 1.5 years
+window = np.int(2./np.mean(np.diff(t_grid_trimmed.squeeze()))) # set window size to the number of time steps in 2 years
 tm_filtered = ndimage.uniform_filter1d(tm_evensampled, size=window)
 tf_lowfreq = interpolate.UnivariateSpline(t_grid_trimmed, tm_filtered, s=0)
 
@@ -107,7 +118,7 @@ rf_lt_lag_amax = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = Xcorr1D_lt(xy, series_func=rf_lowfreq, series_dates=d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=1, normalize=True)
+                              diff=1, normalize=True, pos_only=True)
     rf_lt_corr_amax.append(corr[abs(corr).argmax()])
     rf_lt_lag_amax.append(lags[abs(corr).argmax()])
 
@@ -122,7 +133,7 @@ smb_lt_lag_amax = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = Xcorr1D_lt(xy, series_func=smb_lowfreq, series_dates=smb_d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=1, normalize=True)
+                              diff=1, normalize=True, pos_only=True)
     smb_lt_corr_amax.append(corr[abs(corr).argmax()])
     smb_lt_lag_amax.append(lags[abs(corr).argmax()])
 
