@@ -21,16 +21,20 @@ s = 0.001*np.array(nifl_helper.ArcArray(np.array(xys)))+2 # trim the 2km that wa
 
 
 ### Plot all on one set of axes
-smb_offset=5000 # how many 'meters' above topo to plot this line
-runoff_offset=4000
+smb_offset=4000 # how many 'meters' above topo to plot this line
+runoff_offset=5000 # move runoff to top to accom. vertical indicator of sign switch
 terminus_offset=3000
-scaling=750  # vertical multiplicative factor to display xcorr on same axes as topo
+scaling=800  # vertical multiplicative factor to display xcorr on same axes as topo
 qual_colors = cm.get_cmap('tab20b')
 
 fig, ax = plt.subplots(1, constrained_layout=True)
 
-ax.axvline(10, color='k', lw=1.0, ls=':')
-ax.axvline(14, color='k', lw=1.0, ls=':')
+# ax.axvline(10, color='k', lw=1.0, ls='--')
+ax.axvline(14, color='k', lw=1.0, ls='--')
+ax.plot(10*np.ones_like(s), np.linspace(-1300, smb_offset, len(s)), color='k', lw=1.0, ls='--')
+ax.plot(s, smb_offset*np.ones_like(s), color='k', lw=0.5, ls=':')
+ax.plot(s, runoff_offset*np.ones_like(s), color='k', lw=0.5, ls=':')
+ax.plot(s, terminus_offset*np.ones_like(s), color='k', lw=0.5, ls=':')
 ax.plot(s, smb_offset+ scaling*np.array(smb_corr_amax), color=qual_colors(0), lw=2.0, label='SMB')
 ax.plot(s, runoff_offset+ scaling*np.array(runoff_corr_amax), color=qual_colors(2), lw=2.0, label='Runoff')
 ax.plot(s, terminus_offset+ scaling*np.array(terminus_corr_amax), color=qual_colors(4), lw=2.0, label='Terminus')
@@ -42,6 +46,14 @@ ax.plot(s, terminus_offset+ scaling*np.array(terminus_corr_amax), color=qual_col
 ax.plot(s, smb_offset+ scaling*np.array(smb_lt_corr_amax), color=qual_colors(1), ls=':', lw=2.0, label='SMB long-term')
 ax.plot(s, runoff_offset+ scaling*np.array(rf_lt_corr_amax), color=qual_colors(3), ls=':', lw=2.0, label='Runoff long-term')
 ax.plot(s, terminus_offset+ scaling*np.array(term_lt_corr_amax), color=qual_colors(5), ls=':', lw=2.0, label='Terminus long-term')
+
+## fill to show sign
+plt.fill_between(s, smb_offset+ scaling*np.array(smb_corr_amax), y2=smb_offset, 
+                 color=qual_colors(0), alpha=0.4, hatch='|')
+plt.fill_between(s, runoff_offset+ scaling*np.array(runoff_corr_amax), y2=runoff_offset, 
+                 color=qual_colors(2), alpha=0.4, hatch='|')
+plt.fill_between(s, terminus_offset+ scaling*np.array(terminus_corr_amax), y2=terminus_offset, 
+                 color=qual_colors(4), alpha=0.4, hatch='|')
 
 ax.plot(xvals, bed_vals, color='saddlebrown')
 ax.plot(xvals, surface_vals, color='darkgrey')
