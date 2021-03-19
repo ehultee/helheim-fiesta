@@ -31,7 +31,7 @@ flowline_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Felikson-flowlines/
 velocity_fpath='/Users/lizz/Documents/GitHub/Data_unsynced/Gld-Stack/'
 gl_bed_fpath ='/Users/lizz/Documents/GitHub/Data_unsynced/BedMachine-Greenland/BedMachineGreenland-2017-09-20.nc'
 catchment_smb_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/smb_rec._.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.MM.csv'
-runoff_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/RACMO2_3p2_Helheimgletscher_runoff_1958-2017.csv'
+runoff_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/runoff._.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.MM.csv'
 termini_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/HLM_terminus_widthAVE.csv'
 
 # ### Define the domain of analysis
@@ -126,13 +126,14 @@ for j, xy in enumerate(xys):
 # In[ ]:
 
 
-smb_full = pd.read_csv(catchment_smb_fpath, parse_dates=[0])
-smb_tr = smb_full.loc[smb_full['Date'].dt.year >= 2006]
-smb = smb_tr.loc[smb_tr['Date'].dt.year <2017]
+## Read in RACMO monthly int from Denis
+smb_racmo = pd.read_csv(catchment_smb_fpath, index_col=0, parse_dates=True)
+smb_tr = smb_racmo.loc[smb_racmo.index.year >= 2006]
+smb = smb_tr.loc[smb_tr.index.year <2018].squeeze()
 
-smb_d = [d.utctimetuple() for d in smb['Date']]
+smb_d = [d.utctimetuple() for d in smb.index]
 smb_d_interp = [ice.timeutils.datestr2tdec(d[0], d[1], d[2]) for d in smb_d]
-smb_func = interpolate.interp1d(smb_d_interp, smb['SMB_int'])
+smb_func = interpolate.interp1d(smb_d_interp, smb)
 
 # Now, we compute the normalized cross-correlation between catchment-integrated SMB and surface velocity at each point along the flowline.  We will draw on the inverted velocity series saved in `preds` above.  We save the value of the maximum normalized cross-correlation, and the value in days of the lag where it occurs, to compare with other variables later.
 
@@ -144,7 +145,7 @@ smb_lag_amax = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = nifl.Xcorr1D(xy, series_func=smb_func, series_dates=smb_d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=0, normalize=True, pos_only=True)
+                              diff=1, normalize=True, pos_only=True)
     smb_corr_amax.append(corr[abs(corr).argmax()])
     smb_lag_amax.append(lags[abs(corr).argmax()])
 
@@ -155,15 +156,14 @@ for xy, pred in zip(xys, preds):
 
 # In[ ]:
 
+## Read in RACMO monthly int from Denis
+runoff_racmo = pd.read_csv(runoff_fpath, index_col=0, parse_dates=True)
+runoff_tr = runoff_racmo.loc[runoff_racmo.index.year >= 2006]
+runoff = runoff_tr.loc[runoff_tr.index.year <2018].squeeze()
 
-runoff = np.loadtxt(runoff_fpath, delimiter=',') 
-rnf = runoff[runoff[:,0]>=2006] # trim values from before the start of the velocity series
-rf = rnf[rnf[:,0]<2017] #trim values after the end of the runoff series
-
-runoff_dates = pd.date_range(start='2006-01-01', end='2016-12-31', periods=len(rf))
-runoff_d = [d.utctimetuple() for d in runoff_dates]
+runoff_d = [d.utctimetuple() for d in runoff.index]
 d_interp = [ice.timeutils.datestr2tdec(d[0], d[1], d[2]) for d in runoff_d]
-runoff_func = interpolate.interp1d(d_interp, rf[:,2])
+runoff_func = interpolate.interp1d(d_interp, runoff)
 
 
 # We compute the normalized cross-correlation between catchment-integrated runoff and surface velocity at each same point.  Again we save the value of the maximum normalized cross-correlation, and the value in days of the lag where it occurs, to compare with other variables.
@@ -176,7 +176,7 @@ runoff_lag_amax = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = nifl.Xcorr1D(xy, series_func=runoff_func, series_dates=d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=0, normalize=True, pos_only=True)
+                              diff=1, normalize=True, pos_only=True)
     runoff_corr_amax.append(corr[abs(corr).argmax()])
     runoff_lag_amax.append(lags[abs(corr).argmax()])
 
@@ -187,15 +187,16 @@ for xy, pred in zip(xys, preds):
 
 # In[ ]:
 
+termini = pd.read_csv(termini_fpath, index_col=0, parse_dates=True, usecols=[0,1])
+trmn = termini.loc[termini.index.year >= 2006]
+tm = trmn.loc[trmn.index.year <2017].squeeze()
 
-termini = pd.read_csv(termini_fpath, parse_dates=True, usecols=[0,1])
-termini['date'] = pd.to_datetime(termini['date'])
-trmn = termini.loc[termini['date'].dt.year >= 2006]
-tm = trmn.loc[trmn['date'].dt.year <2017]
+## smooth a little to make more comparable with SMB and runoff
+td = tm.rolling('7D').mean()
 
-termini_d = [d.utctimetuple() for d in tm['date']]
+termini_d = [d.utctimetuple() for d in td.index]
 tm_d_interp = [ice.timeutils.datestr2tdec(d[0], d[1], d[2]) for d in termini_d]
-termini_func = interpolate.interp1d(tm_d_interp, tm['term_km'])
+termini_func = interpolate.interp1d(tm_d_interp, td)
 
 
 # In[ ]:
@@ -206,7 +207,7 @@ terminus_lag_amax = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = nifl.Xcorr1D(xy, series_func=termini_func, series_dates=tm_d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=0, normalize=True)
+                              diff=1, normalize=True)
     terminus_corr_amax.append(corr[abs(corr).argmax()])
     terminus_lag_amax.append(lags[abs(corr).argmax()])
     
