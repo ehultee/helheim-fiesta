@@ -30,7 +30,7 @@ import nifl_helper as nifl
 flowline_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Felikson-flowlines/netcdfs/glaciera199.nc'
 velocity_fpath='/Users/lizz/Documents/GitHub/Data_unsynced/Gld-Stack/'
 gl_bed_fpath ='/Users/lizz/Documents/GitHub/Data_unsynced/BedMachine-Greenland/BedMachineGreenland-2017-09-20.nc'
-catchment_smb_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/HIRHAM_integrated_SMB.csv'
+catchment_smb_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/smb_rec._.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.MM.csv'
 runoff_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/RACMO2_3p2_Helheimgletscher_runoff_1958-2017.csv'
 termini_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/HLM_terminus_widthAVE.csv'
 
@@ -140,29 +140,13 @@ smb_func = interpolate.interp1d(smb_d_interp, smb['SMB_int'])
 
 smb_corr_amax = []
 smb_lag_amax = []
-smb_corr_plag1 = []
-smb_lag_plag1 = []
 
 for xy, pred in zip(xys, preds):
     corr, lags, ci = nifl.Xcorr1D(xy, series_func=smb_func, series_dates=smb_d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=1, normalize=True, pos_only=True)
+                              diff=0, normalize=True, pos_only=True)
     smb_corr_amax.append(corr[abs(corr).argmax()])
     smb_lag_amax.append(lags[abs(corr).argmax()])
-
-
-# In[ ]:
-
-
-c = corr[lags>=0]
-l = lags[lags>=0]
-
-from scipy.signal import argrelextrema
-idxs = np.asarray(argrelextrema(c, np.less)).squeeze();
-cplag1 = c[idxs[0]]
-lplag1 = l[idxs[0]]
-
-print(lplag1)
 
 
 # ### Runoff
@@ -192,7 +176,7 @@ runoff_lag_amax = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = nifl.Xcorr1D(xy, series_func=runoff_func, series_dates=d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=1, normalize=True, pos_only=True)
+                              diff=0, normalize=True, pos_only=True)
     runoff_corr_amax.append(corr[abs(corr).argmax()])
     runoff_lag_amax.append(lags[abs(corr).argmax()])
 
@@ -222,7 +206,7 @@ terminus_lag_amax = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = nifl.Xcorr1D(xy, series_func=termini_func, series_dates=tm_d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=1, normalize=True)
+                              diff=0, normalize=True)
     terminus_corr_amax.append(corr[abs(corr).argmax()])
     terminus_lag_amax.append(lags[abs(corr).argmax()])
     

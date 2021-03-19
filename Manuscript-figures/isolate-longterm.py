@@ -103,7 +103,7 @@ term_lt_lag_amax = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = Xcorr1D_lt(xy, series_func=tf_lowfreq, series_dates=tm_d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=1, normalize=True)
+                              diff=0, normalize=True)
     term_lt_corr_amax.append(corr[abs(corr).argmax()])
     term_lt_lag_amax.append(lags[abs(corr).argmax()])
 
@@ -118,7 +118,7 @@ rf_lt_lag_amax = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = Xcorr1D_lt(xy, series_func=rf_lowfreq, series_dates=d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=1, normalize=True, pos_only=True)
+                              diff=0, normalize=True, pos_only=True)
     rf_lt_corr_amax.append(corr[abs(corr).argmax()])
     rf_lt_lag_amax.append(lags[abs(corr).argmax()])
 
@@ -133,7 +133,7 @@ smb_lt_lag_amax = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = Xcorr1D_lt(xy, series_func=smb_lowfreq, series_dates=smb_d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=1, normalize=True, pos_only=True)
+                              diff=0, normalize=True, pos_only=True)
     smb_lt_corr_amax.append(corr[abs(corr).argmax()])
     smb_lt_lag_amax.append(lags[abs(corr).argmax()])
 
