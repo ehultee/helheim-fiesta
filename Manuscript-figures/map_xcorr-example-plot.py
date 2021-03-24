@@ -141,6 +141,7 @@ smb_func = interpolate.interp1d(smb_d_interp, smb)
 
 smb_corr_amax = []
 smb_lag_amax = []
+smb_significance = []
 
 for xy, pred in zip(xys, preds):
     corr, lags, ci = nifl.Xcorr1D(xy, series_func=smb_func, series_dates=smb_d_interp, 
@@ -148,6 +149,7 @@ for xy, pred in zip(xys, preds):
                               diff=1, normalize=True, pos_only=True)
     smb_corr_amax.append(corr[abs(corr).argmax()])
     smb_lag_amax.append(lags[abs(corr).argmax()])
+    smb_significance.append(abs(corr[abs(corr).argmax()]) > ci[abs(corr).argmax()])
 
 
 # ### Runoff
@@ -173,12 +175,15 @@ runoff_func = interpolate.interp1d(d_interp, runoff)
 
 runoff_corr_amax = []
 runoff_lag_amax = []
+runoff_significance = []
+
 for xy, pred in zip(xys, preds):
     corr, lags, ci = nifl.Xcorr1D(xy, series_func=runoff_func, series_dates=d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
                               diff=1, normalize=True, pos_only=True)
     runoff_corr_amax.append(corr[abs(corr).argmax()])
     runoff_lag_amax.append(lags[abs(corr).argmax()])
+    runoff_significance.append(abs(corr[abs(corr).argmax()]) > ci[abs(corr).argmax()])
 
 
 # ### Terminus position change
@@ -192,7 +197,7 @@ trmn = termini.loc[termini.index.year >= 2006]
 tm = trmn.loc[trmn.index.year <2017].squeeze()
 
 ## smooth a little to make more comparable with SMB and runoff
-td = tm.rolling('7D').mean()
+td = tm.rolling('10D').mean() # approximately 3 measurements per window
 
 termini_d = [d.utctimetuple() for d in td.index]
 tm_d_interp = [ice.timeutils.datestr2tdec(d[0], d[1], d[2]) for d in termini_d]
@@ -204,12 +209,15 @@ termini_func = interpolate.interp1d(tm_d_interp, td)
 
 terminus_corr_amax = []
 terminus_lag_amax = []
+terminus_significance = []
+
 for xy, pred in zip(xys, preds):
     corr, lags, ci = nifl.Xcorr1D(xy, series_func=termini_func, series_dates=tm_d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
                               diff=1, normalize=True)
     terminus_corr_amax.append(corr[abs(corr).argmax()])
     terminus_lag_amax.append(lags[abs(corr).argmax()])
+    terminus_significance.append(abs(corr[abs(corr).argmax()]) > ci[abs(corr).argmax()])
     
 
 # ### Bed topography
