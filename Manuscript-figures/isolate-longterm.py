@@ -124,7 +124,7 @@ for xy, pred in zip(xys, preds):
 
 # In[ ]:
 ## Low-frequency SMB variability
-smb_evensampled = 1E-12*np.array(smb_func(t_grid_trimmed).squeeze())
+smb_evensampled = 1E-9*np.array(smb_func(t_grid_trimmed).squeeze())
 smb_filtered = ndimage.uniform_filter1d(smb_evensampled, size=window)
 smb_lowfreq = interpolate.UnivariateSpline(t_grid_trimmed, smb_filtered, s=0)
 
@@ -190,16 +190,16 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 ## black-white hillshade topo underneath
 rgb2 = ls.shade(np.asarray(b_hel), cmap=plt.get_cmap('gray'), blend_mode='overlay',
-               dx=np.mean(np.diff(x_hel)), dy=np.mean(np.diff(y_hel)), vert_exag=5.)
+                dx=np.mean(np.diff(x_hel)), dy=np.mean(np.diff(y_hel)), vert_exag=5.)
 
 fig, ((ax1, ax2, ax3), (ax4,ax5,ax6)) = plt.subplots(nrows=2,ncols=3, figsize=(12, 8), 
-                                                     # constrained_layout=True, 
-                                                     sharex=True, sharey=True,
-                                                     gridspec_kw={'wspace':0.01})
+                                                      # constrained_layout=True, 
+                                                      sharex=True, sharey=True,
+                                                      gridspec_kw={'wspace':0.01})
     
 ax1.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
 sc1 = ax1.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=smb_lt_corr_amax, cmap=div_colors,
-                 vmin=corrnorm_min, vmax=corrnorm_max)
+                  vmin=corrnorm_min, vmax=corrnorm_max)
 # ## set up correctly scaled colorbar
 # div1 = make_axes_locatable(ax1)
 # cax1 = div1.append_axes("right", size="5%", pad=0.1)
@@ -207,12 +207,12 @@ sc1 = ax1.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=smb_lt_corr_amax
 # cb1.ax.set_title('AMax. xcorr')
 ax1.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000), 
         ylim=(-2590000, -2550000), yticks=(-2590000, -2570000, -2550000), 
-       xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
-       ylabel='Northing [km]', title='Catchment SMB')
+        xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
+        ylabel='Northing [km]', title='Catchment SMB')
 
 ax2.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
 sc2 = ax2.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=rf_lt_corr_amax, cmap=div_colors,
-                 vmin=corrnorm_min, vmax=corrnorm_max)
+                  vmin=corrnorm_min, vmax=corrnorm_max)
 # ## set up correctly scaled colorbar
 # div2 = make_axes_locatable(ax2)
 # cax2 = div2.append_axes("right", size="5%", pad=0.1)
@@ -220,12 +220,12 @@ sc2 = ax2.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=rf_lt_corr_amax,
 # cb2.ax.set_title('AMax. xcorr')
 ax2.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000), 
       ylim=(-2590000, -2550000), yticks=(-2590000, -2570000, -2550000), 
-       xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
-       title='Catchment runoff')
+        xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
+        title='Catchment runoff')
 
 ax3.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
 sc3 = ax3.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=term_lt_corr_amax, cmap=div_colors,
-                 vmin=corrnorm_min, vmax=corrnorm_max)
+                  vmin=corrnorm_min, vmax=corrnorm_max)
 ## set up correctly scaled colorbar - one for all xcorr plots
 div3 = make_axes_locatable(ax3)
 cax3 = div3.append_axes("right", size="5%", pad=0.1)
@@ -233,8 +233,8 @@ cb3 = fig.colorbar(sc3, cax=cax3, extend='both')
 cb3.ax.set_ylabel('AMax. xcorr')
 ax3.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000), 
       ylim=(-2590000, -2550000), yticks=(-2590000, -2570000, -2550000), 
-       xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
-       title='Terminus position', aspect=1.)
+        xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
+        title='Terminus position', aspect=1.)
 
 ## SECOND ROW
 ax4.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
@@ -247,7 +247,7 @@ sc4 = ax4.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=smb_lt_lag_amax,
 # cb1.ax.set_title('Lag [d] at peak xcorr')
 ax4.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000), 
       ylim=(-2590000, -2550000), yticks=(-2590000, -2570000, -2550000), 
-       xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
+        xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
       xlabel='Easting [km]', ylabel='Northing [km]')
 
 ax5.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
@@ -260,7 +260,7 @@ sc5 = ax5.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=rf_lt_lag_amax, 
 # cb2.ax.set_title('Lag [d] at peak xcorr')
 ax5.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000), 
       ylim=(-2590000, -2550000), yticks=(-2590000, -2570000, -2550000), 
-       xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
+        xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
       xlabel='Easting [km]')
 
 ax6.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
@@ -273,7 +273,7 @@ cb6 = fig.colorbar(sc6, cax=cax6, extend='min')
 cb6.ax.set_ylabel('Lag [d] at peak xcorr')
 ax6.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000), 
       ylim=(-2590000, -2550000), yticks=(-2590000, -2570000, -2550000), 
-       xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
+        xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
       xlabel='Easting [km]', aspect=1.)
 # plt.tight_layout()
 plt.show()
