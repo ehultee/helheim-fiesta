@@ -15,7 +15,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import iceutils as ice
 import nifl_helper as nifl
-
+import datetime # for figure labelling
 
 # ### Define where the necessary data lives
 
@@ -26,7 +26,7 @@ flowline_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Felikson-flowlines/
 velocity_fpath='/Users/lizz/Documents/GitHub/Data_unsynced/Gld-Stack/'
 gl_bed_fpath ='/Users/lizz/Documents/GitHub/Data_unsynced/BedMachine-Greenland/BedMachineGreenland-2017-09-20.nc'
 catchment_smb_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/smb_rec._.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.MM.csv'
-runoff_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/RACMO2_3p2_Helheimgletscher_runoff_1958-2017.csv'
+runoff_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/runoff._.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.MM.csv'
 termini_fpath = '/Users/lizz/Documents/GitHub/Data_unsynced/Helheim-processed/HLM_terminus_widthAVE.csv'
 
 # ### Define the domain of analysis
@@ -121,13 +121,14 @@ for j, xy in enumerate(xys):
 # In[ ]:
 
 
-smb_full = pd.read_csv(catchment_smb_fpath, parse_dates=[0])
-smb_tr = smb_full.loc[smb_full['Date'].dt.year >= 2006]
-smb = smb_tr.loc[smb_tr['Date'].dt.year <2017]
+## Read in RACMO monthly int from Denis
+smb_racmo = pd.read_csv(catchment_smb_fpath, index_col=0, parse_dates=True)
+smb_tr = smb_racmo.loc[smb_racmo.index.year >= 2006]
+smb = smb_tr.loc[smb_tr.index.year <2018].squeeze()
 
-smb_d = [d.utctimetuple() for d in smb['Date']]
-smb_d_interp = [timeutils.datestr2tdec(d[0], d[1], d[2]) for d in smb_d]
-smb_func = interpolate.interp1d(smb_d_interp, smb['SMB_int'])
+smb_d = [d.utctimetuple() for d in smb.index]
+smb_d_interp = [ice.timeutils.datestr2tdec(d[0], d[1], d[2]) for d in smb_d]
+smb_func = interpolate.interp1d(smb_d_interp, smb)
 
 # ### Runoff
 
@@ -136,14 +137,13 @@ smb_func = interpolate.interp1d(smb_d_interp, smb['SMB_int'])
 # In[ ]:
 
 
-runoff = np.loadtxt(runoff_fpath, delimiter=',') 
-rnf = runoff[runoff[:,0]>=2006] # trim values from before the start of the velocity series
-rf = rnf[rnf[:,0]<2017] #trim values after the end of the runoff series
+runoff_racmo = pd.read_csv(runoff_fpath, index_col=0, parse_dates=True)
+runoff_tr = runoff_racmo.loc[runoff_racmo.index.year >= 2006]
+runoff = runoff_tr.loc[runoff_tr.index.year <2018].squeeze()
 
-runoff_dates = pd.date_range(start='2006-01-01', end='2016-12-31', periods=len(rf))
-runoff_d = [d.utctimetuple() for d in runoff_dates]
-d_interp = [timeutils.datestr2tdec(d[0], d[1], d[2]) for d in runoff_d]
-runoff_func = interpolate.interp1d(d_interp, rf[:,2])
+runoff_d = [d.utctimetuple() for d in runoff.index]
+d_interp = [ice.timeutils.datestr2tdec(d[0], d[1], d[2]) for d in runoff_d]
+runoff_func = interpolate.interp1d(d_interp, runoff)
 
 # ### Terminus position change
 
@@ -151,16 +151,16 @@ runoff_func = interpolate.interp1d(d_interp, rf[:,2])
 
 # In[ ]:
 
+termini = pd.read_csv(termini_fpath, index_col=0, parse_dates=True, usecols=[0,1])
+trmn = termini.loc[termini.index.year >= 2006]
+tm = trmn.loc[trmn.index.year <2017].squeeze()
 
-termini = pd.read_csv(termini_fpath, parse_dates=True, usecols=[0,1])
-termini['date'] = pd.to_datetime(termini['date'])
-trmn = termini.loc[termini['date'].dt.year >= 2006]
-tm = trmn.loc[trmn['date'].dt.year <2017]
+## smooth a little to make more comparable with SMB and runoff
+td = tm.rolling('10D').mean() # approximately 3 measurements per window
 
-termini_d = [d.utctimetuple() for d in tm['date']]
-tm_d_interp = [timeutils.datestr2tdec(d[0], d[1], d[2]) for d in termini_d]
-termini_func = interpolate.interp1d(tm_d_interp, tm['term_km'])
-
+termini_d = [d.utctimetuple() for d in td.index]
+tm_d_interp = [ice.timeutils.datestr2tdec(d[0], d[1], d[2]) for d in termini_d]
+termini_func = interpolate.interp1d(tm_d_interp, td)
 
     
 
@@ -215,7 +215,7 @@ date_chks = range(2009, 2018)
 for i in range(len(date_chks)-1):
     corr, lags, ci = nifl.Xcorr1D(xys[point_to_plot], series_func=smb_func, series_dates=smb_d_interp, 
                               velocity_pred=preds[point_to_plot], t_grid=t_grid, t_limits=(date_chks[i], date_chks[i+1]),
-                                  diff=1, normalize=True, pos_only=True)
+                                  diff=1, normalize=True, pos_only=False)
     smb_annual_corrs.append(corr)
     smb_annual_lags.append(lags)
     smb_annual_ci.append(ci)
@@ -230,7 +230,7 @@ rf_annual_ci = []
 for i in range(len(date_chks)-1):
     corr, lags, ci = nifl.Xcorr1D(xys[point_to_plot], series_func=runoff_func, series_dates=d_interp, 
                               velocity_pred=preds[point_to_plot], t_grid=t_grid, t_limits=(date_chks[i], date_chks[i+1]),
-                                  diff=1, normalize=True, pos_only=True)
+                                  diff=1, normalize=True, pos_only=False)
     rf_annual_corrs.append(corr)
     rf_annual_lags.append(lags)
     rf_annual_ci.append(ci)
@@ -293,6 +293,7 @@ for k in range(len(tm_annual_corrs)):
     ax.plot(tm_annual_lags[k], -1*np.array(tm_annual_ci[k]), ls=':', color='k')
     ax.plot(tm_annual_lags[k], tm_annual_corrs[k])
     ax.fill_between(tm_annual_lags[k], y1=tm_annual_corrs[k], y2=0, where=abs(tm_annual_corrs[k])>tm_annual_ci[k])
+    ax.text(150, 0.8, str(date_chks[k]), ha='center', size=10, weight=500, color='k')
     if k==0:
         ax.set(title='Terminus pos.')
     elif k==len(axs)-1:
@@ -300,7 +301,7 @@ for k in range(len(tm_annual_corrs)):
     else:
         continue
 plt.tight_layout()
-plt.savefig('/Users/ehultee/Desktop/20210222-annual_chunk-allvars.png')
+plt.savefig('/Users/lizz/Desktop/{}-annual_chunk-allvars.png'.format(datetime.date.today().strftime('%Y%m%d')))
 
 
 
