@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import iceutils as ice
 import nifl_helper as nifl
 import datetime # for figure labelling
+from matplotlib import ticker
 
 # ### Define where the necessary data lives
 
@@ -255,16 +256,19 @@ for i in range(len(date_chks)-1):
 
 # In[ ]:
 
+clrs = plt.get_cmap('plasma')(np.array(range(len(xys)))/len(xys))
+corr_color = clrs[point_to_plot]
 
-fig, axs = plt.subplots(len(rf_annual_corrs), ncols=3, figsize=(5, 14), sharex=True, sharey=True)
+fig, axs = plt.subplots(len(rf_annual_corrs), ncols=3, figsize=(6, 14), sharex=True, sharey=True)
 for i in range(len(smb_annual_corrs)):
     ax = axs[i][0]
     ax.axvline(x=0, color='k', alpha=0.5)
     ax.axhline(y=0, color='k', alpha=0.5)
     ax.plot(smb_annual_lags[i], smb_annual_ci[i], ls=':', color='k')
     ax.plot(smb_annual_lags[i], -1*np.array(smb_annual_ci[i]), ls=':', color='k')
-    ax.plot(smb_annual_lags[i], smb_annual_corrs[i])
-    ax.fill_between(smb_annual_lags[i], y1=smb_annual_corrs[i], y2=0, where=abs(smb_annual_corrs[i])>smb_annual_ci[i])
+    ax.plot(smb_annual_lags[i], smb_annual_corrs[i], color=corr_color)
+    ax.fill_between(smb_annual_lags[i], y1=smb_annual_corrs[i], y2=0, 
+                    where=abs(smb_annual_corrs[i])>smb_annual_ci[i], color=corr_color)
     if i==0:
         ax.set(title='SMB', ylabel='xcorr')
     elif i==len(axs)-1:
@@ -277,8 +281,9 @@ for j in range(len(rf_annual_corrs)):
     ax.axhline(y=0, color='k', alpha=0.5)
     ax.plot(rf_annual_lags[j], rf_annual_ci[j], ls=':', color='k')
     ax.plot(rf_annual_lags[j], -1*np.array(rf_annual_ci[j]), ls=':', color='k')
-    ax.plot(rf_annual_lags[j], rf_annual_corrs[j])
-    ax.fill_between(rf_annual_lags[j], y1=rf_annual_corrs[j], y2=0, where=abs(rf_annual_corrs[j])>rf_annual_ci[j])
+    ax.plot(rf_annual_lags[j], rf_annual_corrs[j], color=corr_color)
+    ax.fill_between(rf_annual_lags[j], y1=rf_annual_corrs[j], y2=0, 
+                    where=abs(rf_annual_corrs[j])>rf_annual_ci[j], color=corr_color)
     if j==0:
         ax.set(title='Runoff')
     elif j==len(axs)-1:
@@ -291,19 +296,21 @@ for k in range(len(tm_annual_corrs)):
     ax.axhline(y=0, color='k', alpha=0.5)
     ax.plot(tm_annual_lags[k], tm_annual_ci[k], ls=':', color='k')
     ax.plot(tm_annual_lags[k], -1*np.array(tm_annual_ci[k]), ls=':', color='k')
-    ax.plot(tm_annual_lags[k], tm_annual_corrs[k])
-    ax.fill_between(tm_annual_lags[k], y1=tm_annual_corrs[k], y2=0, where=abs(tm_annual_corrs[k])>tm_annual_ci[k])
-    ax.text(150, 0.8, str(date_chks[k]), ha='center', size=10, weight=500, color='k')
+    ax.plot(tm_annual_lags[k], tm_annual_corrs[k], color=corr_color)
+    ax.fill_between(tm_annual_lags[k], y1=tm_annual_corrs[k], y2=0, 
+                    where=abs(tm_annual_corrs[k])>tm_annual_ci[k], color=corr_color)
+    ax.text(150, 0.65, str(date_chks[k]), ha='center', size=10, weight=500, color='k')
     if k==0:
         ax.set(title='Terminus pos.')
     elif k==len(axs)-1:
         ax.set(xlabel='Lag [d]')
     else:
         continue
+for ax in axs.ravel():
+    ax.set(ylim=(-1,1), xticks=(-300, 0, 300))
+    ax.xaxis.set_minor_locator(ticker.MultipleLocator(60))
 plt.tight_layout()
-plt.savefig('/Users/lizz/Desktop/{}-annual_chunk-allvars.png'.format(datetime.date.today().strftime('%Y%m%d')))
-
-
+# plt.savefig('/Users/lizz/Desktop/{}-annual_chunk-allvars.png'.format(datetime.date.today().strftime('%Y%m%d')))
 
 
 
