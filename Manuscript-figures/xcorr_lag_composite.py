@@ -152,4 +152,4 @@ ax6.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000),
       xlabel='Easting [km]', aspect=1.)
 # plt.tight_layout()
 # plt.show()
-plt.savefig('/Users/lizz/Desktop/20210204-helheim-xcorr_lag_composite')
+# plt.savefig('/Users/lizz/Desktop/20210204-helheim-xcorr_lag_composite')

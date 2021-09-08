@@ -63,7 +63,8 @@ ax.plot(s, terminus_offset*np.ones_like(s), color='k', lw=0.5, ls=':')
 
 ## SMB stems
 markerline, stemlines, baseline = ax.stem(s, smb_offset+ scaling*np.array(smb_lt_corr_amax),
-                                          bottom=smb_offset, basefmt='k:',label='SMB long-term')
+                                          bottom=smb_offset, basefmt='k:',label='SMB long-term',
+                                          markerfmt='d')
 plt.setp(stemlines, 'color', qual_colors(1))
 plt.setp(stemlines, 'linestyle', 'dotted')
 plt.setp(markerline, 'color', qual_colors(1))
@@ -76,7 +77,8 @@ plt.setp(markerline, 'color', qual_colors(0))
 
 ## Runoff stems
 markerline, stemlines, baseline = ax.stem(s, runoff_offset+ scaling*np.array(rf_lt_corr_amax),
-                                          bottom=runoff_offset, basefmt='k:',label='Runoff long-term')
+                                          bottom=runoff_offset, basefmt='k:',label='Runoff long-term',
+                                          markerfmt='d')
 plt.setp(stemlines, 'color', qual_colors(3))
 plt.setp(stemlines, 'linestyle', 'dotted')
 plt.setp(markerline, 'color', qual_colors(3))
@@ -89,7 +91,8 @@ plt.setp(markerline, 'color', qual_colors(2))
 
 ## Terminus stems
 markerline, stemlines, baseline = ax.stem(s, terminus_offset+ scaling*np.array(term_lt_corr_amax),
-                                          bottom=terminus_offset, basefmt='k:',label='Terminus long-term')
+                                          bottom=terminus_offset, basefmt='k:',label='Terminus long-term',
+                                          markerfmt='d')
 plt.setp(stemlines, 'color', qual_colors(5))
 plt.setp(stemlines, 'linestyle', 'dotted')
 plt.setp(markerline, 'color', qual_colors(5))

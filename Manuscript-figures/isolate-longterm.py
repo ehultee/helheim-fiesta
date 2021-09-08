@@ -93,7 +93,7 @@ def Xcorr1D_lt(pt, series_func, series_dates, velocity_pred, t_grid, t_limits,
 t_grid_trimmed = t_grid[np.argwhere(t_grid<2017)] ## valid range for interpolated funcs
 
 tm_evensampled = termini_func(t_grid_trimmed).squeeze()
-window = np.int(2./np.mean(np.diff(t_grid_trimmed.squeeze()))) # set window size to the number of time steps in 2 years
+window = np.int(1./np.mean(np.diff(t_grid_trimmed.squeeze()))) # set window size to the number of time steps in 2 years
 tm_filtered = ndimage.uniform_filter1d(tm_evensampled, size=window)
 tf_lowfreq = interpolate.UnivariateSpline(t_grid_trimmed, tm_filtered, s=0)
 
@@ -137,35 +137,35 @@ for xy, pred in zip(xys, preds):
     smb_lt_corr_amax.append(corr[abs(corr).argmax()])
     smb_lt_lag_amax.append(lags[abs(corr).argmax()])
 
-# # In[ ]:
-# ## Plot the low-frequency signals in stack
-# fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(8, 8), sharex=True)
-# for i in range(len(xys)):
-#     # ax1.plot(hel_stack.tdec, series[i], '.')
-#     ax1.plot(t_grid, preds[i]['full'], label='Point {}'.format(i), color=clrs[i], lw=1.0, alpha=0.3)
-#     ax1.plot(t_grid, preds[i]['secular']+preds[i]['transient'], color=clrs[i], lw=2.0)
-# ax1.set(ylabel='Surf. speed [km/a]',
-#         yticks=(4, 6, 8), xlim=(2009,2017))
+# In[ ]:
+## Plot the low-frequency signals in stack
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(8, 8), sharex=True)
+for i in range(len(xys)):
+    # ax1.plot(hel_stack.tdec, series[i], '.')
+    # ax1.plot(t_grid, preds[i]['full'], label='Point {}'.format(i), color=clrs[i], lw=1.0, alpha=0.3)
+    ax1.plot(t_grid, preds[i]['secular']+preds[i]['transient'], color=clrs[i], lw=2.0)
+ax1.set(ylabel='Surf. speed [km/a]',
+        yticks=(4, 6, 8), xlim=(2009,2017))
 
-# ax2.scatter(smb_d_interp, 0.001*np.array(smb['SMB_int']), color='k', alpha=0.3) # raw SMB data
-# ax2.plot(t_grid_trimmed, 0.001*np.array(smb_func(t_grid_trimmed)), color='k', alpha=0.3)
-# ax2.plot(t_grid_trimmed, 1E9*np.array(smb_lowfreq(t_grid_trimmed)), color='k', alpha=0.7)
-# ax2.set(ylabel='Int. SMB [m3 w.e.]')
+ax2.scatter(smb_d_interp, 0.001*np.array(smb['SMB_int']), color='k', alpha=0.3) # raw SMB data
+ax2.plot(t_grid_trimmed, 0.001*np.array(smb_func(t_grid_trimmed)), color='k', alpha=0.3)
+ax2.plot(t_grid_trimmed, 1E9*np.array(smb_lowfreq(t_grid_trimmed)), color='k', alpha=0.7)
+ax2.set(ylabel='Int. SMB [m3 w.e.]')
 
-# ax3.scatter(d_interp, 1000*np.array(rf[:,2]), color='k', alpha=0.3) # raw runoff data
-# ax3.plot(t_grid_trimmed, 1000*np.array(runoff_func(t_grid_trimmed)), color='k', alpha=0.3)
-# ax3.plot(t_grid_trimmed, 1000*np.array(rf_lowfreq(t_grid_trimmed)), color='k', alpha=0.7)
-# ax3.set(ylabel='Int. runoff [m3 w.e.]')
-# ax3.ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+ax3.scatter(d_interp, 1000*np.array(rf[:,2]), color='k', alpha=0.3) # raw runoff data
+ax3.plot(t_grid_trimmed, 1000*np.array(runoff_func(t_grid_trimmed)), color='k', alpha=0.3)
+ax3.plot(t_grid_trimmed, 1000*np.array(rf_lowfreq(t_grid_trimmed)), color='k', alpha=0.7)
+ax3.set(ylabel='Int. runoff [m3 w.e.]')
+ax3.ticklabel_format(axis='y', style='sci', scilimits=(0,0))
 
-# ax4.scatter(tm_d_interp, tm['term_km'], color='k', alpha=0.3) # raw terminus data
-# ax4.plot(t_grid_trimmed, termini_func(t_grid_trimmed), color='k', alpha=0.3)
-# ax4.plot(t_grid_trimmed, tf_lowfreq(t_grid_trimmed), color='k', alpha=0.7)
-# ax4.set(ylabel='Term. pos. [km]')
-# ax4.set(xlim=(2009,2017), xlabel='Year')
-# for ax in (ax1, ax2, ax3, ax4):
-#     ax.grid(True, which='major', axis='x', ls=':', color='k', alpha=0.5)
-# plt.tight_layout()
+ax4.scatter(tm_d_interp, tm['term_km'], color='k', alpha=0.3) # raw terminus data
+ax4.plot(t_grid_trimmed, termini_func(t_grid_trimmed), color='k', alpha=0.3)
+ax4.plot(t_grid_trimmed, tf_lowfreq(t_grid_trimmed), color='k', alpha=0.7)
+ax4.set(ylabel='Term. pos. [km]')
+ax4.set(xlim=(2009,2017), xlabel='Year')
+for ax in (ax1, ax2, ax3, ax4):
+    ax.grid(True, which='major', axis='x', ls=':', color='k', alpha=0.5)
+plt.tight_layout()
 
 
 # In[ ]:
@@ -188,6 +188,8 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
+sig_markers = ['o', 'x']
+
 ## black-white hillshade topo underneath
 rgb2 = ls.shade(np.asarray(b_hel), cmap=plt.get_cmap('gray'), blend_mode='overlay',
                 dx=np.mean(np.diff(x_hel)), dy=np.mean(np.diff(y_hel)), vert_exag=5.)
@@ -198,7 +200,11 @@ fig, ((ax1, ax2, ax3), (ax4,ax5,ax6)) = plt.subplots(nrows=2,ncols=3, figsize=(1
                                                       gridspec_kw={'wspace':0.01})
     
 ax1.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
-sc1 = ax1.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=smb_lt_corr_amax, cmap=div_colors,
+sc1 = ax1.scatter(np.asarray(xys)[smb_lt_significance,0], np.asarray(xys)[smb_lt_significance,1], 
+                  c=np.asarray(smb_lt_corr_amax)[smb_lt_significance], cmap=div_colors, marker=sig_markers[0],
+                  vmin=corrnorm_min, vmax=corrnorm_max)
+ax1.scatter(np.asarray(xys)[np.invert(smb_lt_significance),0], np.asarray(xys)[np.invert(smb_lt_significance),1], 
+                  c=np.asarray(smb_lt_corr_amax)[np.invert(smb_lt_significance)], cmap=div_colors, marker=sig_markers[1],
                   vmin=corrnorm_min, vmax=corrnorm_max)
 # ## set up correctly scaled colorbar
 # div1 = make_axes_locatable(ax1)
@@ -211,7 +217,11 @@ ax1.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000),
         ylabel='Northing [km]', title='Catchment SMB')
 
 ax2.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
-sc2 = ax2.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=rf_lt_corr_amax, cmap=div_colors,
+sc2 = ax2.scatter(np.asarray(xys)[rf_lt_significance,0], np.asarray(xys)[rf_lt_significance,1], 
+                  c=np.asarray(rf_lt_corr_amax)[rf_lt_significance], cmap=div_colors, marker=sig_markers[0],
+                  vmin=corrnorm_min, vmax=corrnorm_max)
+ax2.scatter(np.asarray(xys)[np.invert(rf_lt_significance),0], np.asarray(xys)[np.invert(rf_lt_significance),1], 
+                  c=np.asarray(rf_lt_corr_amax)[np.invert(rf_lt_significance)], cmap=div_colors, marker=sig_markers[1],
                   vmin=corrnorm_min, vmax=corrnorm_max)
 # ## set up correctly scaled colorbar
 # div2 = make_axes_locatable(ax2)
@@ -224,7 +234,11 @@ ax2.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000),
         title='Catchment runoff')
 
 ax3.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
-sc3 = ax3.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=term_lt_corr_amax, cmap=div_colors,
+sc3 = ax3.scatter(np.asarray(xys)[terminus_lt_significance,0], np.asarray(xys)[terminus_lt_significance,1], 
+                  c=np.asarray(term_lt_corr_amax)[terminus_lt_significance], cmap=div_colors, marker=sig_markers[0],
+                  vmin=corrnorm_min, vmax=corrnorm_max)
+ax3.scatter(np.asarray(xys)[np.invert(terminus_lt_significance),0], np.asarray(xys)[np.invert(terminus_lt_significance),1], 
+                  c=np.asarray(term_lt_corr_amax)[np.invert(terminus_lt_significance)], cmap=div_colors, marker=sig_markers[1],
                   vmin=corrnorm_min, vmax=corrnorm_max)
 ## set up correctly scaled colorbar - one for all xcorr plots
 div3 = make_axes_locatable(ax3)
@@ -238,7 +252,11 @@ ax3.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000),
 
 ## SECOND ROW
 ax4.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
-sc4 = ax4.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=smb_lt_lag_amax, cmap=lag_colors,
+sc4 = ax4.scatter(np.asarray(xys)[smb_lt_significance,0], np.asarray(xys)[smb_lt_significance,1], 
+                  c=np.asarray(smb_lt_lag_amax)[smb_lt_significance], cmap=lag_colors, marker=sig_markers[0],
+                  vmin=lagnorm_min, vmax=lagnorm_max)
+ax4.scatter(np.asarray(xys)[np.invert(smb_lt_significance),0], np.asarray(xys)[np.invert(smb_lt_significance),1], 
+                  c=np.asarray(smb_lt_lag_amax)[np.invert(smb_lt_significance)], cmap=lag_colors, marker=sig_markers[1],
                   vmin=lagnorm_min, vmax=lagnorm_max)
 # ## set up correctly scaled colorbar
 # div4 = make_axes_locatable(ax4)
@@ -251,8 +269,13 @@ ax4.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000),
       xlabel='Easting [km]', ylabel='Northing [km]')
 
 ax5.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
-sc5 = ax5.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=rf_lt_lag_amax, cmap=lag_colors,
+sc5 = ax5.scatter(np.asarray(xys)[rf_lt_significance,0], np.asarray(xys)[rf_lt_significance,1], 
+                  c=np.asarray(rf_lt_lag_amax)[rf_lt_significance], cmap=lag_colors, marker=sig_markers[0],
                   vmin=lagnorm_min, vmax=lagnorm_max)
+ax5.scatter(np.asarray(xys)[np.invert(rf_lt_significance),0], np.asarray(xys)[np.invert(rf_lt_significance),1], 
+                  c=np.asarray(rf_lt_lag_amax)[np.invert(rf_lt_significance)], cmap=lag_colors, marker=sig_markers[1],
+                  vmin=lagnorm_min, vmax=lagnorm_max)
+
 # ## set up correctly scaled colorbar
 # div5 = make_axes_locatable(ax5)
 # cax5 = div5.append_axes("right", size="5%", pad=0.1)
@@ -264,8 +287,13 @@ ax5.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000),
       xlabel='Easting [km]')
 
 ax6.imshow(rgb2, origin='lower', extent=(x_hel[0], x_hel[-1], y_hel[0], y_hel[-1]))
-sc6 = ax6.scatter(np.asarray(xys)[:,0], np.asarray(xys)[:,1], c=term_lt_lag_amax, cmap=lag_colors,
+sc6 = ax6.scatter(np.asarray(xys)[terminus_lt_significance,0], np.asarray(xys)[terminus_lt_significance,1], 
+                  c=np.asarray(term_lt_lag_amax)[terminus_lt_significance], cmap=lag_colors, marker=sig_markers[0],
                   vmin=lagnorm_min, vmax=lagnorm_max)
+ax6.scatter(np.asarray(xys)[np.invert(terminus_lt_significance),0], np.asarray(xys)[np.invert(terminus_lt_significance),1], 
+                  c=np.asarray(term_lt_lag_amax)[np.invert(terminus_lt_significance)], cmap=lag_colors, marker=sig_markers[1],
+                  vmin=lagnorm_min, vmax=lagnorm_max)
+
 ## set up correctly scaled colorbar
 div6 = make_axes_locatable(ax6)
 cax6 = div6.append_axes("right", size="5%", pad=0.1)

@@ -10,8 +10,7 @@ from netCDF4 import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-import matplotlib.gridspec as gridspec
-import datetime # for labelling
+import pandas as pd
 
 ## set matplotlib font size defaults
 SMALL_SIZE = 10

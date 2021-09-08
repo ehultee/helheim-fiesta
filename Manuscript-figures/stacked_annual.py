@@ -273,11 +273,11 @@ for i in range(len(smb_annual_ci)):
     ax.axhline(y=0, color='k', alpha=0.5)
     ax.plot(smb_annual_lags[i], smb_annual_ci[i], ls=':', color='k')
     ax.plot(smb_annual_lags[i], -1*np.array(smb_annual_ci[i]), ls=':', color='k')
-    for n in range(len(xys)):
+    for n in range(len(xys))[::-1]:
         corr_color = clrs[n]
         ax.plot(smb_annual_lags[i], annual_vals[n]['smb'][i], color=corr_color, alpha=0.3)
         ax.fill_between(smb_annual_lags[i], y1=annual_vals[n]['smb'][i], y2=0, 
-                        where=abs(annual_vals[n]['smb'][i])>smb_annual_ci[i], color=corr_color, alpha=0.3)
+                        where=abs(annual_vals[n]['smb'][i])>smb_annual_ci[i], color=corr_color, alpha=0.2)
     if i==0:
         ax.set(title='SMB', ylabel='xcorr')
     elif i==len(axs)-1:
@@ -290,11 +290,11 @@ for j in range(len(rf_annual_ci)):
     ax.axhline(y=0, color='k', alpha=0.5)
     ax.plot(rf_annual_lags[j], rf_annual_ci[j], ls=':', color='k')
     ax.plot(rf_annual_lags[j], -1*np.array(rf_annual_ci[j]), ls=':', color='k')
-    for n in range(len(xys)):
+    for n in range(len(xys))[::-1]:
         corr_color = clrs[n]
         ax.plot(rf_annual_lags[j], annual_vals[n]['runoff'][j], color=corr_color, alpha=0.3)
         ax.fill_between(rf_annual_lags[j], y1=annual_vals[n]['runoff'][j], y2=0, 
-                        where=abs(annual_vals[n]['runoff'][j])>rf_annual_ci[j], color=corr_color, alpha=0.3)
+                        where=abs(annual_vals[n]['runoff'][j])>rf_annual_ci[j], color=corr_color, alpha=0.2)
     if j==0:
         ax.set(title='Runoff')
     elif j==len(axs)-1:
@@ -307,11 +307,11 @@ for k in range(len(tm_annual_ci)):
     ax.axhline(y=0, color='k', alpha=0.5)
     ax.plot(tm_annual_lags[k], tm_annual_ci[k], ls=':', color='k')
     ax.plot(tm_annual_lags[k], -1*np.array(tm_annual_ci[k]), ls=':', color='k')
-    for n in range(len(xys)):
+    for n in range(len(xys))[::-1]:
         corr_color = clrs[n]
         ax.plot(tm_annual_lags[k], annual_vals[n]['terminus'][k], color=corr_color, alpha=0.3)
         ax.fill_between(tm_annual_lags[k], y1=annual_vals[n]['terminus'][k], y2=0, 
-                        where=abs(annual_vals[n]['terminus'][k])>tm_annual_ci[k], color=corr_color, alpha=0.3)
+                        where=abs(annual_vals[n]['terminus'][k])>tm_annual_ci[k], color=corr_color, alpha=0.2)
     ax.text(150, 0.65, str(date_chks[k]), ha='center', size=10, weight=500, color='k')
     if k==0:
         ax.set(title='Terminus pos.')
