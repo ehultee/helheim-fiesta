@@ -12,11 +12,12 @@ from scipy import interpolate
 import pyproj as pyproj
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import iceutils as ice
 import nifl_helper as nifl
 import datetime # for figure labelling
-from matplotlib import ticker
+from matplotlib import ticker\
 
 # ### Define where the necessary data lives
 
@@ -212,14 +213,22 @@ smb_annual_lags = []
 smb_annual_ci = []
 
 point_to_plot =5
+v_local = preds[point_to_plot]
+## modify CCSL
+a_vel = sm.tsa.stattools.acf(np.diff(v_local['full']))[1]
+b_smb = sm.tsa.stattools.acf(np.diff(smb))[1]
+F_smb = np.sqrt((1+(a_vel*b_smb))/(1-(a_vel*b_smb)))
+
+
 date_chks = range(2009, 2018)
 for i in range(len(date_chks)-1):
     corr, lags, ci = nifl.Xcorr1D(xys[point_to_plot], series_func=smb_func, series_dates=smb_d_interp, 
-                              velocity_pred=preds[point_to_plot], t_grid=t_grid, t_limits=(date_chks[i], date_chks[i+1]),
+                              velocity_pred=v_local, t_grid=t_grid, t_limits=(date_chks[i], date_chks[i+1]),
                                   diff=1, normalize=True, pos_only=False)
+    ci_mod = F_smb*np.asarray(ci)
     smb_annual_corrs.append(corr)
     smb_annual_lags.append(lags)
-    smb_annual_ci.append(ci)
+    smb_annual_ci.append(ci_mod)
 
 # In[ ]:
 
@@ -228,13 +237,17 @@ rf_annual_corrs = []
 rf_annual_lags = []
 rf_annual_ci = []
 
+b_runoff = sm.tsa.stattools.acf(np.diff(runoff))[1]
+F_runoff = np.sqrt((1+(a_vel*b_runoff))/(1-(a_vel*b_runoff)))
+
 for i in range(len(date_chks)-1):
     corr, lags, ci = nifl.Xcorr1D(xys[point_to_plot], series_func=runoff_func, series_dates=d_interp, 
                               velocity_pred=preds[point_to_plot], t_grid=t_grid, t_limits=(date_chks[i], date_chks[i+1]),
                                   diff=1, normalize=True, pos_only=False)
+    ci_mod = F_runoff*np.asarray(ci)
     rf_annual_corrs.append(corr)
     rf_annual_lags.append(lags)
-    rf_annual_ci.append(ci)
+    rf_annual_ci.append(ci_mod)
 
 # In[ ]:
 
@@ -243,13 +256,17 @@ tm_annual_corrs = []
 tm_annual_lags = []
 tm_annual_ci = []
 
+b_terminus = sm.tsa.stattools.acf(np.diff(td))[1]
+F_terminus = np.sqrt((1+(a_vel*b_terminus))/(1-(a_vel*b_terminus)))
+
 for i in range(len(date_chks)-1):
     corr, lags, ci = nifl.Xcorr1D(xys[point_to_plot], series_func=termini_func, series_dates=tm_d_interp, 
                               velocity_pred=preds[point_to_plot], t_grid=t_grid, t_limits=(date_chks[i], date_chks[i+1]),
                                   diff=1, normalize=True)
+    ci_mod = F_terminus *np.asarray(ci)
     tm_annual_corrs.append(corr)
     tm_annual_lags.append(lags)
-    tm_annual_ci.append(ci)
+    tm_annual_ci.append(ci_mod)
 
 
 

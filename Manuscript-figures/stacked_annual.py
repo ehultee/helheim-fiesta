@@ -12,6 +12,7 @@ from scipy import interpolate
 import pyproj as pyproj
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import iceutils as ice
 import nifl_helper as nifl
@@ -204,9 +205,20 @@ B_helheim = interpolate.RectBivariateSpline(x_hel, y_hel[::-1], b_hel.T[::,::-1]
 annual_vals = {i: {'smb': [], 'runoff': [], 'terminus': []} 
                for i in range(len(xys))}
 
+b_smb = sm.tsa.stattools.acf(np.diff(smb))[1]
+b_runoff = sm.tsa.stattools.acf(np.diff(runoff))[1]
+b_terminus = sm.tsa.stattools.acf(np.diff(td))[1]
+
 for j in range(len(xys)):
     point_to_plot = j
-        
+    v_local = preds[point_to_plot]
+    a_vel = sm.tsa.stattools.acf(np.diff(v_local['full']))[1]
+
+    F_smb = np.sqrt((1+(a_vel*b_smb))/(1-(a_vel*b_smb)))
+    F_runoff = np.sqrt((1+(a_vel*b_runoff))/(1-(a_vel*b_runoff)))
+    F_terminus = np.sqrt((1+(a_vel*b_terminus))/(1-(a_vel*b_terminus)))
+
+
     # In[ ]:
     # ## Annual chunks to compare changing seasonal cycle
     
@@ -222,9 +234,10 @@ for j in range(len(xys)):
         corr, lags, ci = nifl.Xcorr1D(xys[point_to_plot], series_func=smb_func, series_dates=smb_d_interp, 
                                   velocity_pred=preds[point_to_plot], t_grid=t_grid, t_limits=(date_chks[i], date_chks[i+1]),
                                       diff=1, normalize=True, pos_only=False)
+        ci_mod = F_smb*np.asarray(ci) # correct the significance interval
         smb_annual_corrs.append(corr)
         smb_annual_lags.append(lags)
-        smb_annual_ci.append(ci)
+        smb_annual_ci.append(ci_mod)
     annual_vals[j]['smb'] = smb_annual_corrs
     
     
@@ -239,9 +252,10 @@ for j in range(len(xys)):
         corr, lags, ci = nifl.Xcorr1D(xys[point_to_plot], series_func=runoff_func, series_dates=d_interp, 
                                   velocity_pred=preds[point_to_plot], t_grid=t_grid, t_limits=(date_chks[i], date_chks[i+1]),
                                       diff=1, normalize=True, pos_only=False)
+        ci_mod = F_runoff*np.asarray(ci) # correct the significance interval
         rf_annual_corrs.append(corr)
         rf_annual_lags.append(lags)
-        rf_annual_ci.append(ci)
+        rf_annual_ci.append(ci_mod)
     annual_vals[j]['runoff'] = rf_annual_corrs
     # In[ ]:
     
@@ -254,9 +268,10 @@ for j in range(len(xys)):
         corr, lags, ci = nifl.Xcorr1D(xys[point_to_plot], series_func=termini_func, series_dates=tm_d_interp, 
                                   velocity_pred=preds[point_to_plot], t_grid=t_grid, t_limits=(date_chks[i], date_chks[i+1]),
                                       diff=1, normalize=True)
+        ci_mod = F_terminus *np.asarray(ci) # correct the significance interval
         tm_annual_corrs.append(corr)
         tm_annual_lags.append(lags)
-        tm_annual_ci.append(ci)
+        tm_annual_ci.append(ci_mod)
     annual_vals[j]['terminus'] = tm_annual_corrs
 
 
@@ -265,6 +280,7 @@ for j in range(len(xys)):
 # In[ ]:
 
 clrs = plt.get_cmap('plasma')(np.array(range(len(xys)))/len(xys))
+corr_line_width=1.0
 
 fig, axs = plt.subplots(len(rf_annual_corrs), ncols=3, figsize=(6, 14), sharex=True, sharey=True)
 for i in range(len(smb_annual_ci)):
@@ -273,9 +289,10 @@ for i in range(len(smb_annual_ci)):
     ax.axhline(y=0, color='k', alpha=0.5)
     ax.plot(smb_annual_lags[i], smb_annual_ci[i], ls=':', color='k')
     ax.plot(smb_annual_lags[i], -1*np.array(smb_annual_ci[i]), ls=':', color='k')
-    for n in range(len(xys))[::-1]:
+    for n in range(len(xys)):
         corr_color = clrs[n]
-        ax.plot(smb_annual_lags[i], annual_vals[n]['smb'][i], color=corr_color, alpha=0.3)
+        ax.plot(smb_annual_lags[i], annual_vals[n]['smb'][i], color=corr_color, 
+                lw=corr_line_width, alpha=0.3)
         ax.fill_between(smb_annual_lags[i], y1=annual_vals[n]['smb'][i], y2=0, 
                         where=abs(annual_vals[n]['smb'][i])>smb_annual_ci[i], color=corr_color, alpha=0.2)
     if i==0:
@@ -290,9 +307,10 @@ for j in range(len(rf_annual_ci)):
     ax.axhline(y=0, color='k', alpha=0.5)
     ax.plot(rf_annual_lags[j], rf_annual_ci[j], ls=':', color='k')
     ax.plot(rf_annual_lags[j], -1*np.array(rf_annual_ci[j]), ls=':', color='k')
-    for n in range(len(xys))[::-1]:
+    for n in range(len(xys)):
         corr_color = clrs[n]
-        ax.plot(rf_annual_lags[j], annual_vals[n]['runoff'][j], color=corr_color, alpha=0.3)
+        ax.plot(rf_annual_lags[j], annual_vals[n]['runoff'][j], color=corr_color, 
+                lw=corr_line_width, alpha=0.3)
         ax.fill_between(rf_annual_lags[j], y1=annual_vals[n]['runoff'][j], y2=0, 
                         where=abs(annual_vals[n]['runoff'][j])>rf_annual_ci[j], color=corr_color, alpha=0.2)
     if j==0:
@@ -307,12 +325,13 @@ for k in range(len(tm_annual_ci)):
     ax.axhline(y=0, color='k', alpha=0.5)
     ax.plot(tm_annual_lags[k], tm_annual_ci[k], ls=':', color='k')
     ax.plot(tm_annual_lags[k], -1*np.array(tm_annual_ci[k]), ls=':', color='k')
-    for n in range(len(xys))[::-1]:
+    for n in range(len(xys)):
         corr_color = clrs[n]
-        ax.plot(tm_annual_lags[k], annual_vals[n]['terminus'][k], color=corr_color, alpha=0.3)
+        ax.plot(tm_annual_lags[k], annual_vals[n]['terminus'][k], color=corr_color, 
+                lw=corr_line_width, alpha=0.3)
         ax.fill_between(tm_annual_lags[k], y1=annual_vals[n]['terminus'][k], y2=0, 
                         where=abs(annual_vals[n]['terminus'][k])>tm_annual_ci[k], color=corr_color, alpha=0.2)
-    ax.text(150, 0.65, str(date_chks[k]), ha='center', size=10, weight=500, color='k')
+    ax.text(250, 0.55, str(date_chks[k]), ha='center', size=10, weight=500, color='k')
     if k==0:
         ax.set(title='Terminus pos.')
     elif k==len(axs)-1:
@@ -320,7 +339,9 @@ for k in range(len(tm_annual_ci)):
     else:
         continue
 for ax in axs.ravel():
-    ax.set(ylim=(-1,1), xticks=(-300, 0, 300))
+    ax.set(ylim=(-1,1), 
+            # xlim=(0,360),
+           xticks=(-360, -180, 0, 180, 360))
     ax.xaxis.set_minor_locator(ticker.MultipleLocator(60))
 plt.tight_layout()
 # plt.savefig('/Users/lizz/Desktop/{}-annual_chunk-allvars.png'.format(datetime.date.today().strftime('%Y%m%d')))
