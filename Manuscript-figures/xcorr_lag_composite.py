@@ -8,9 +8,11 @@ Created on Thu Feb  4 18:21:08 2021
 """
 
 div_colors = 'RdBu' # choose divergent colormap for xcorr
-lag_colors = 'PiYG' # choose divergent colormap for lag
+# lag_colors = 'PiYG' # choose divergent colormap for lag
 corrnorm_min, corrnorm_max = -0.3, 0.3
-lagnorm_min, lagnorm_max = -365, 365
+# lagnorm_min, lagnorm_max = -365, 365
+lag_colors = 'Greens'
+lagnorm_min, lagnorm_max = 0, 365
 
 ## set matplotlib font size defaults
 SMALL_SIZE = 10
@@ -146,6 +148,7 @@ div6 = make_axes_locatable(ax6)
 cax6 = div6.append_axes("right", size="5%", pad=0.1)
 cb6 = fig.colorbar(sc6, cax=cax6)
 cb6.ax.set_ylabel('Lag [d] at peak xcorr')
+cb6.set_ticks([0, 60, 120, 180, 240, 300, 360])
 ax6.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000), 
       ylim=(-2590000, -2550000), yticks=(-2590000, -2570000, -2550000), 
        xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),

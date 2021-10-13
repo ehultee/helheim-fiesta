@@ -214,7 +214,7 @@ terminus_significance = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = nifl.Xcorr1D(xy, series_func=termini_func, series_dates=tm_d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=1, normalize=True)
+                              diff=1, normalize=True, pos_only=True)
     terminus_corr_amax.append(corr[abs(corr).argmax()])
     terminus_lag_amax.append(lags[abs(corr).argmax()])
     terminus_significance.append(abs(corr[abs(corr).argmax()]) > ci[abs(corr).argmax()])
