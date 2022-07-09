@@ -194,7 +194,7 @@ for j in highlight_idx:
     series = hel_stack.timeseries(xy=pt, key=data_key)
     f3_ax2.plot(hel_stack.tdec, series, '.', color=clrs[j], alpha=0.5)
     f3_ax2.plot(t_grid, preds[j]['full'], label='Point {}'.format(j), color=clrs[j], lw=2.0)
-    f3_ax2.plot(t_grid, preds[j]['secular']+preds[j]['transient'], color=clrs[j], lw=1.0, alpha=0.5)
+    f3_ax2.plot(t_grid, preds[j]['secular']+preds[j]['transient'], color=clrs[j], lw=2.0, alpha=0.3)
 f3_ax2.set(ylabel='Surf. speed [km/a]', yticks=(4, 6, 8), 
            xlim=(2009,2017), xticklabels=())
 ## Plot velocity stack and forcing series
