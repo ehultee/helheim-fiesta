@@ -34,7 +34,7 @@ rgb2 = ls.shade(np.asarray(b_hel), cmap=plt.get_cmap('gray'), blend_mode='overla
                dx=np.mean(np.diff(x_hel)), dy=np.mean(np.diff(y_hel)), vert_exag=5.)
 
 fig, ((ax1, ax2, ax3), (ax4,ax5,ax6)) = plt.subplots(nrows=2,ncols=3, figsize=(12, 8), 
-                                                     # constrained_layout=True, 
+                                                      # constrained_layout=True, ## seems  to wreck label placement
                                                      sharex=True, sharey=True,
                                                      gridspec_kw={'wspace':0.01})
     
@@ -147,12 +147,12 @@ ax6.scatter(np.asarray(xys)[np.invert(terminus_significance),0], np.asarray(xys)
 div6 = make_axes_locatable(ax6)
 cax6 = div6.append_axes("right", size="5%", pad=0.1)
 cb6 = fig.colorbar(sc6, cax=cax6)
-cb6.ax.set_ylabel('Lag [d] at peak xcorr')
+cb6.ax.set_ylabel('Lag [d] at AMax. xcorr')
 cb6.set_ticks([0, 60, 120, 180, 240, 300, 360])
 ax6.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000), 
       ylim=(-2590000, -2550000), yticks=(-2590000, -2570000, -2550000), 
        xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
       xlabel='Easting [km]', aspect=1.)
-# plt.tight_layout()
+plt.tight_layout()
 # plt.show()
 # plt.savefig('/Users/lizz/Desktop/20210204-helheim-xcorr_lag_composite')
