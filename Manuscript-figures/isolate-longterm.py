@@ -103,7 +103,7 @@ term_lt_lag_amax = []
 for xy, pred in zip(xys, preds):
     corr, lags, ci = Xcorr1D_lt(xy, series_func=tf_lowfreq, series_dates=tm_d_interp, 
                               velocity_pred=pred, t_grid=t_grid, t_limits=(2009,2017), 
-                              diff=0, normalize=True)
+                              diff=0, normalize=True, pos_only=True)
     term_lt_corr_amax.append(corr[abs(corr).argmax()])
     term_lt_lag_amax.append(lags[abs(corr).argmax()])
 
@@ -137,43 +137,43 @@ for xy, pred in zip(xys, preds):
     smb_lt_corr_amax.append(corr[abs(corr).argmax()])
     smb_lt_lag_amax.append(lags[abs(corr).argmax()])
 
-# In[ ]:
-## Plot the low-frequency signals in stack
-fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(8, 8), sharex=True)
-for i in range(len(xys)):
-    # ax1.plot(hel_stack.tdec, series[i], '.')
-    # ax1.plot(t_grid, preds[i]['full'], label='Point {}'.format(i), color=clrs[i], lw=1.0, alpha=0.3)
-    ax1.plot(t_grid, preds[i]['secular']+preds[i]['transient'], color=clrs[i], lw=2.0)
-ax1.set(ylabel='Surf. speed [km/a]',
-        yticks=(4, 6, 8), xlim=(2009,2017))
+# # In[ ]:
+# ## Plot the low-frequency signals in stack
+# fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(8, 8), sharex=True)
+# for i in range(len(xys)):
+#     # ax1.plot(hel_stack.tdec, series[i], '.')
+#     # ax1.plot(t_grid, preds[i]['full'], label='Point {}'.format(i), color=clrs[i], lw=1.0, alpha=0.3)
+#     ax1.plot(t_grid, preds[i]['secular']+preds[i]['transient'], color=clrs[i], lw=2.0)
+# ax1.set(ylabel='Surf. speed [km/a]',
+#         yticks=(4, 6, 8), xlim=(2009,2017))
 
-ax2.scatter(smb_d_interp, 0.001*np.array(smb['SMB_int']), color='k', alpha=0.3) # raw SMB data
-ax2.plot(t_grid_trimmed, 0.001*np.array(smb_func(t_grid_trimmed)), color='k', alpha=0.3)
-ax2.plot(t_grid_trimmed, 1E9*np.array(smb_lowfreq(t_grid_trimmed)), color='k', alpha=0.7)
-ax2.set(ylabel='Int. SMB [m3 w.e.]')
+# ax2.scatter(smb_d_interp, 0.001*np.array(smb['SMB_int']), color='k', alpha=0.3) # raw SMB data
+# ax2.plot(t_grid_trimmed, 0.001*np.array(smb_func(t_grid_trimmed)), color='k', alpha=0.3)
+# ax2.plot(t_grid_trimmed, 1E9*np.array(smb_lowfreq(t_grid_trimmed)), color='k', alpha=0.7)
+# ax2.set(ylabel='Int. SMB [m3 w.e.]')
 
-ax3.scatter(d_interp, 1000*np.array(rf[:,2]), color='k', alpha=0.3) # raw runoff data
-ax3.plot(t_grid_trimmed, 1000*np.array(runoff_func(t_grid_trimmed)), color='k', alpha=0.3)
-ax3.plot(t_grid_trimmed, 1000*np.array(rf_lowfreq(t_grid_trimmed)), color='k', alpha=0.7)
-ax3.set(ylabel='Int. runoff [m3 w.e.]')
-ax3.ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+# ax3.scatter(d_interp, 1000*np.array(rf[:,2]), color='k', alpha=0.3) # raw runoff data
+# ax3.plot(t_grid_trimmed, 1000*np.array(runoff_func(t_grid_trimmed)), color='k', alpha=0.3)
+# ax3.plot(t_grid_trimmed, 1000*np.array(rf_lowfreq(t_grid_trimmed)), color='k', alpha=0.7)
+# ax3.set(ylabel='Int. runoff [m3 w.e.]')
+# ax3.ticklabel_format(axis='y', style='sci', scilimits=(0,0))
 
-ax4.scatter(tm_d_interp, tm['term_km'], color='k', alpha=0.3) # raw terminus data
-ax4.plot(t_grid_trimmed, termini_func(t_grid_trimmed), color='k', alpha=0.3)
-ax4.plot(t_grid_trimmed, tf_lowfreq(t_grid_trimmed), color='k', alpha=0.7)
-ax4.set(ylabel='Term. pos. [km]')
-ax4.set(xlim=(2009,2017), xlabel='Year')
-for ax in (ax1, ax2, ax3, ax4):
-    ax.grid(True, which='major', axis='x', ls=':', color='k', alpha=0.5)
-plt.tight_layout()
+# ax4.scatter(tm_d_interp, tm['term_km'], color='k', alpha=0.3) # raw terminus data
+# ax4.plot(t_grid_trimmed, termini_func(t_grid_trimmed), color='k', alpha=0.3)
+# ax4.plot(t_grid_trimmed, tf_lowfreq(t_grid_trimmed), color='k', alpha=0.7)
+# ax4.set(ylabel='Term. pos. [km]')
+# ax4.set(xlim=(2009,2017), xlabel='Year')
+# for ax in (ax1, ax2, ax3, ax4):
+#     ax.grid(True, which='major', axis='x', ls=':', color='k', alpha=0.5)
+# plt.tight_layout()
 
 
 # In[ ]:
 ## Set up six-panel composite
 div_colors = 'RdBu' # choose divergent colormap for xcorr
-lag_colors = 'PiYG' # choose divergent colormap for lag
 corrnorm_min, corrnorm_max = -0.3, 0.3
-lagnorm_min, lagnorm_max = -365, 365
+lag_colors = 'Greens' # lag colormap consistent with main text
+lagnorm_min, lagnorm_max = 0, 365
 
 ## set matplotlib font size defaults
 SMALL_SIZE = 10
@@ -297,12 +297,12 @@ ax6.scatter(np.asarray(xys)[np.invert(terminus_lt_significance),0], np.asarray(x
 ## set up correctly scaled colorbar
 div6 = make_axes_locatable(ax6)
 cax6 = div6.append_axes("right", size="5%", pad=0.1)
-cb6 = fig.colorbar(sc6, cax=cax6, extend='min')
-cb6.ax.set_ylabel('Lag [d] at peak xcorr')
+cb6 = fig.colorbar(sc6, cax=cax6)
+cb6.ax.set_ylabel('Lag [d] at AMax. xcorr')
 ax6.set(xlim=(278000, 320000), xticks=(280000, 300000, 320000), 
       ylim=(-2590000, -2550000), yticks=(-2590000, -2570000, -2550000), 
         xticklabels=('280', '300', '320'), yticklabels=('-2590', '-2570', '-2550'),
       xlabel='Easting [km]', aspect=1.)
-# plt.tight_layout()
+plt.tight_layout()
 plt.show()
 # plt.savefig('/Users/lizz/Desktop/20210204-helheim-longterm_xcorr_lag_composite')
